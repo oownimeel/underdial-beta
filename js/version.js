@@ -2,27 +2,15 @@
 // The same files serve both sites; the beta site is told apart by its address,
 // and keeps its own data so testing never touches the released app's records.
 
-export const APP_VERSION = "1.3.0";
+export const APP_VERSION = "1.2.0";
 export const IS_BETA = /\/underdial-beta\//.test(location.pathname);
 export const STORAGE_NAME = IS_BETA ? "underdial-beta" : "underdial";
 
 /** Newest first. Korean is the source text; English sits beside it. */
 export const CHANGELOG = [
   {
-    version: "1.3.0",
-    date: "2026-11-22",
-    ko: [
-      "로그북에서 날짜를 누르면 그날 측정한 시계 목록이 나오고, 시계를 고르면 그날의 측정 기록을 모두 볼 수 있습니다.",
-      "로그북 달력에 그날 측정한 시계가 여러 개면 개수가 표시됩니다.",
-    ],
-    en: [
-      "In the log book, tapping a day lists the watches measured that day; pick one to see all of that day's measurements.",
-      "Days with more than one watch show how many in the log book calendar.",
-    ],
-  },
-  {
     version: "1.2.0",
-    date: "2026-11-21",
+    date: "2026-11-22",
     ko: [
       "측정에 실패하면 이유를 알려 줍니다: 소리가 작음, 주변 소음, 부딪힘, 쿼츠 시계, 불규칙한 박동.",
       "신호가 잡히지 않을 때 무엇을 바꿔 보면 좋을지 미리 알려 줍니다.",
@@ -31,6 +19,8 @@ export const CHANGELOG = [
       "점검이 필요해 보이면 이유와 함께 알려 줍니다.",
       "시계 상태에 하루 오차도 반영합니다: ±10초 이내는 양호, ±20초까지는 주의, 그보다 크면 점검 권장.",
       "진폭 기준을 현실에 맞게 바꿨습니다: 250~310°는 양호, 220~250°는 주의, 220° 미만은 점검 권장.",
+      "로그북에서 날짜를 누르면 그날 측정한 시계 목록이 나오고, 시계를 고르면 그날의 측정 기록을 모두 볼 수 있습니다.",
+      "로그북 달력에 그날 측정한 시계가 여러 개면 개수가 표시됩니다.",
       "설정 › 녹음 파일: 모든 녹음을 ZIP 파일 하나로 한 번에 내보낼 수 있습니다.",
       "설정 › 의견 보내기: 이 기기의 오류 기록을 복사해 카페에 붙여넣을 수 있습니다.",
       "설정 › 버전 정보에서 업데이트 내역을 볼 수 있습니다.",
@@ -43,6 +33,8 @@ export const CHANGELOG = [
       "When a watch may need servicing, the app says so and why.",
       "A watch's status now counts its daily rate too: within ±10 s/d is good, up to ±20 is worth watching, beyond that suggests a service.",
       "Amplitude ranges now match common practice: 250–310° is good, 220–250° is worth watching, below 220° suggests a service.",
+      "In the log book, tapping a day lists the watches measured that day; pick one to see all of that day's measurements.",
+      "Days with more than one watch show how many in the log book calendar.",
       "Settings › Recordings: export every recording at once as one ZIP file.",
       "Settings › Send feedback copies this device's error log to paste into the cafe.",
       "Settings › Version shows what changed in each update.",
