@@ -91,7 +91,7 @@ export async function renderSettings(root) {
     <section class="stack rise" style="animation-delay:160ms">
       <span class="eyebrow">${esc(t("참고 기준"))}</span>
       <div class="list">
-        <div class="list-row"><span class="grow">Amplitude</span><span class="caption"><span class="good">270–310° ${esc(t("양호"))}</span> · <span class="critical">220° ${esc(t("미만 점검"))}</span></span></div>
+        <div class="list-row"><span class="grow">Amplitude</span><span class="caption"><span class="good">250–310° ${esc(t("양호"))}</span> · <span class="critical">220° ${esc(t("미만 점검"))}</span></span></div>
         <div class="list-row"><span class="grow">Beat error</span><span class="caption"><span class="good">≤0.3 ms ${esc(t("양호"))}</span> · <span class="critical">≥0.6 ms ${esc(t("점검"))}</span></span></div>
       </div>
       <span class="caption">${esc(t("커뮤니티에서 통용되는 값이며 공식 규격이 아닙니다."))}</span>

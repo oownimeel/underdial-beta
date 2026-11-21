@@ -2,12 +2,22 @@
 // The same files serve both sites; the beta site is told apart by its address,
 // and keeps its own data so testing never touches the released app's records.
 
-export const APP_VERSION = "1.2.1";
+export const APP_VERSION = "1.2.2";
 export const IS_BETA = /\/underdial-beta\//.test(location.pathname);
 export const STORAGE_NAME = IS_BETA ? "underdial-beta" : "underdial";
 
 /** Newest first. Korean is the source text; English sits beside it. */
 export const CHANGELOG = [
+  {
+    version: "1.2.2",
+    date: "2026-11-21",
+    ko: [
+      "진폭 기준을 현실에 맞게 바꿨습니다: 250~310°는 양호, 220~250°는 주의, 220° 미만은 점검 권장.",
+    ],
+    en: [
+      "Amplitude ranges now match common practice: 250–310° is good, 220–250° is worth watching, below 220° suggests a service.",
+    ],
+  },
   {
     version: "1.2.1",
     date: "2026-11-21",

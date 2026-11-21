@@ -824,7 +824,7 @@ export function tapePoints(result) {
 
 /** Community rules of thumb: "good" | "caution" | "critical". */
 export function amplitudeGrade(value) {
-  if (value >= 270 && value <= 310) return "good";
+  if (value >= 250 && value <= 310) return "good";
   if (value < 220) return "critical";
   return "caution";
 }
