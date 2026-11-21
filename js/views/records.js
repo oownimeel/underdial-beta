@@ -1,7 +1,7 @@
 // Records: a month log book (each measured day shows the watch's photo), every
 // record in order, the record detail, and the clock card with the phone's time.
 import { t, locale } from "../i18n.js";
-import { esc, icon, sheet, confirmDelete, toast, formatRate, formatDateTime, formatNumber, blobURL } from "../ui.js";
+import { esc, icon, sheet, confirmDelete, toast, formatRate, formatDateTime, formatNumber, blobURL, grade } from "../ui.js";
 import * as store from "../store.js";
 import { paintClock } from "../dial.js";
 import { amplitudeGrade, beatErrorGrade } from "../engine.js";
@@ -9,6 +9,7 @@ import { thumb, paintThumbs } from "./watch.js";
 import { positionLabel } from "./measure.js";
 import { openResultCard } from "../card.js";
 import { interpretationHTML } from "../interpret.js";
+import { overallGrade } from "./home.js";
 
 let shownMonth = null;
 const PAGE = 50;          // records listed at first; "show more" adds another page
@@ -18,22 +19,26 @@ function calendar(month, measurements, watchesById) {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const today = new Date().toDateString();
-  const byDay = new Map();
+  const byDay = new Map();   // day → that day's measurements, newest first
   for (const m of measurements) {
     const d = new Date(m.date);
-    if (d.getFullYear() === month.getFullYear() && d.getMonth() === month.getMonth() && !byDay.has(d.getDate())) byDay.set(d.getDate(), m);
+    if (d.getFullYear() !== month.getFullYear() || d.getMonth() !== month.getMonth()) continue;
+    if (!byDay.has(d.getDate())) byDay.set(d.getDate(), []);
+    byDay.get(d.getDate()).push(m);
   }
   const dow = new Intl.DateTimeFormat(locale(), { weekday: "narrow" });
   let html = "";
   for (let i = 0; i < 7; i++) html += `<span class="dow">${esc(dow.format(new Date(2026, 1, 1 + i)))}</span>`;
   for (let i = 0; i < first.getDay(); i++) html += `<span class="day other"></span>`;
   for (let day = 1; day <= days; day++) {
-    const m = byDay.get(day);
+    const list = byDay.get(day);
+    const m = list && list[0];
     const w = m && watchesById.get(m.watchId);
+    const watchCount = list ? new Set(list.map((x) => x.watchId)).size : 0;
     const date = new Date(month.getFullYear(), month.getMonth(), day);
     const cls = ["day", date.toDateString() === today ? "today" : "", m ? "has" : "", w && w.photo ? "photo" : ""].join(" ");
     html += m
-      ? `<button class="${cls}" data-record="${m.id}" aria-label="${esc(formatDateTime(m.date))}">${w && w.photo ? `<img class="ph" src="${blobURL(w.photo)}" alt="">` : ""}<span class="n">${day}</span></button>`
+      ? `<button class="${cls}" data-day="${date.getTime()}" aria-label="${esc(t("{date} · 시계 {n}개 · 측정 {count}회", { date: dayTitle(date), n: watchCount, count: list.length }))}">${w && w.photo ? `<img class="ph" src="${blobURL(w.photo)}" alt="">` : ""}<span class="n">${day}</span>${watchCount > 1 ? `<span class="count num">${watchCount}</span>` : ""}</button>`
       : `<span class="${cls}"><span class="n">${day}</span></span>`;
   }
   return html;
@@ -75,12 +80,99 @@ export async function renderRecords(root) {
   root.querySelector("[data-prev]").onclick = () => { shownMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth() - 1, 1); renderRecords(root); };
   root.querySelector("[data-next]").onclick = () => { shownMonth = new Date(shownMonth.getFullYear(), shownMonth.getMonth() + 1, 1); renderRecords(root); };
   root.querySelectorAll("[data-record]").forEach((el) => { el.onclick = () => openRecordDetail(el.dataset.record); });
+  root.querySelectorAll("[data-day]").forEach((el) => { el.onclick = () => openDay(new Date(Number(el.dataset.day))); });
   const more = root.querySelector("[data-more]");
   if (more) more.onclick = () => {
     const scroller = root.closest(".screen"), top = scroller ? scroller.scrollTop : 0;
     listLimit += PAGE * 2;
     renderRecords(root).then(() => { if (scroller) scroller.scrollTop = top; });
   };
+}
+
+const dayTitle = (date) => new Intl.DateTimeFormat(locale(), { month: "long", day: "numeric", weekday: "short" }).format(date);
+const sameDay = (ms, date) => new Date(ms).toDateString() === date.toDateString();
+const timeOf = (ms) => new Intl.DateTimeFormat(locale(), { hour: "numeric", minute: "2-digit" }).format(new Date(ms));
+const qualityText = (level) => [t("신호 불안정"), t("신호 보통"), t("신호 좋음")][level] || "";
+
+/**
+ * A logbook day: the watches measured that day, then one watch's measurements, then the record.
+ * Steps with a single choice are skipped, so a day with one measurement opens it straight away.
+ */
+export async function openDay(date) {
+  const [all, watches] = await Promise.all([store.measurements(), store.watches()]);
+  const dayList = all.filter((m) => sameDay(m.date, date));
+  if (!dayList.length) return;
+  if (dayList.length === 1) { openRecordDetail(dayList[0].id); return; }
+  const watchesById = new Map(watches.map((w) => [w.id, w]));
+
+  sheet((body, close) => {
+    let current = null;   // watchId shown, or null for the watch list
+    const groups = () => {
+      const map = new Map();
+      for (const m of dayList) {
+        if (!map.has(m.watchId)) map.set(m.watchId, []);
+        map.get(m.watchId).push(m);
+      }
+      return [...map.entries()];
+    };
+
+    const watchList = () => {
+      const rows = groups().map(([watchId, list]) => {
+        const w = watchesById.get(watchId);
+        const good = list.filter((m) => m.qualityLevel > 0);
+        const use = good.length ? good : list;
+        const avg = use.reduce((s, m) => s + m.rate, 0) / use.length;
+        const g = overallGrade({ ...use[0], rate: avg });
+        return `<button class="list-row" data-watch="${esc(watchId)}">
+            ${thumb(w)}
+            <span class="grow"><span class="title">${esc(w ? w.name : t("삭제된 시계"))}</span>
+              <span class="caption">${esc(t("측정 {n}회", { n: list.length }))} · <span class="${g}">${esc(grade(g))}</span></span></span>
+            <span class="rec-rate">${formatRate(avg)} s/d</span>
+            ${icon("chevron", 'class="chev"')}
+          </button>`;
+      }).join("");
+      body.innerHTML = `<p class="caption" style="margin:0">${esc(t("이 날 측정한 시계 {n}개 · 오차는 그날 평균입니다.", { n: groups().length }))}</p>
+        <div class="list">${rows}</div>`;
+      paintThumbs(body);
+      body.querySelectorAll("[data-watch]").forEach((el) => { el.onclick = () => { current = el.dataset.watch; draw(); }; });
+    };
+
+    const measurementList = (watchId, canGoBack) => {
+      const w = watchesById.get(watchId);
+      const list = dayList.filter((m) => m.watchId === watchId);
+      body.innerHTML = `
+        ${canGoBack ? `<button class="btn btn-ghost day-back" data-back>${icon("back")}${esc(t("시계 목록"))}</button>` : ""}
+        <div class="day-watch">${thumb(w, 52)}<span class="grow"><span class="title">${esc(w ? w.name : t("삭제된 시계"))}</span>
+          <span class="caption">${esc(t("측정 {n}회", { n: list.length }))}</span></span></div>
+        <div class="list">${list.map((m) => `
+          <button class="list-row" data-record="${m.id}">
+            <span class="grow"><span class="title num">${esc(timeOf(m.date))}</span>
+              <span class="caption">${esc(store.archiveNumber(m.serial))}${m.position ? " · " + esc(positionLabel(m.position)) : ""} · ${esc(qualityText(m.qualityLevel))}</span></span>
+            <span class="rec-rate ${m.qualityLevel > 0 ? "" : "muted"}">${formatRate(m.rate)} s/d</span>
+            ${icon("chevron", 'class="chev"')}
+          </button>`).join("")}</div>`;
+      paintThumbs(body);
+      const back = body.querySelector("[data-back]");
+      if (back) back.onclick = () => { current = null; draw(); };
+      body.querySelectorAll("[data-record]").forEach((el) => { el.onclick = () => openRecordDetail(el.dataset.record); });
+    };
+
+    const draw = () => {
+      const g = groups();
+      if (!g.length) { close(); return; }
+      if (g.length === 1) measurementList(g[0][0], false);
+      else if (current && g.some(([id]) => id === current)) measurementList(current, true);
+      else watchList();
+    };
+
+    // A record deleted from the detail sheet disappears from this day too.
+    const stop = store.onChange(async () => {
+      const fresh = await store.measurements();
+      dayList.splice(0, dayList.length, ...fresh.filter((m) => sameDay(m.date, date)));
+      if (body.isConnected) draw(); else stop();
+    });
+    draw();
+  }, { title: dayTitle(date) });
 }
 
 export function openRecordDetail(id) {

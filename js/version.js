@@ -2,12 +2,24 @@
 // The same files serve both sites; the beta site is told apart by its address,
 // and keeps its own data so testing never touches the released app's records.
 
-export const APP_VERSION = "1.2.0";
+export const APP_VERSION = "1.3.0";
 export const IS_BETA = /\/underdial-beta\//.test(location.pathname);
 export const STORAGE_NAME = IS_BETA ? "underdial-beta" : "underdial";
 
 /** Newest first. Korean is the source text; English sits beside it. */
 export const CHANGELOG = [
+  {
+    version: "1.3.0",
+    date: "2026-11-22",
+    ko: [
+      "로그북에서 날짜를 누르면 그날 측정한 시계 목록이 나오고, 시계를 고르면 그날의 측정 기록을 모두 볼 수 있습니다.",
+      "로그북 달력에 그날 측정한 시계가 여러 개면 개수가 표시됩니다.",
+    ],
+    en: [
+      "In the log book, tapping a day lists the watches measured that day; pick one to see all of that day's measurements.",
+      "Days with more than one watch show how many in the log book calendar.",
+    ],
+  },
   {
     version: "1.2.0",
     date: "2026-11-21",
