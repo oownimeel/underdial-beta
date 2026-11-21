@@ -3,7 +3,7 @@
 // The ranges are community rules of thumb (and COSC for rate), not a standard.
 import { t } from "./i18n.js";
 import { esc } from "./ui.js";
-import { amplitudeGrade, beatErrorGrade } from "./engine.js";
+import { amplitudeGrade, beatErrorGrade, rateGrade } from "./engine.js";
 
 const one = (v) => Math.abs(v).toFixed(1).replace(/\.0$/, "");
 
@@ -20,12 +20,7 @@ export function headline(rate) {
   return { sentence, verdict, tone };
 }
 
-function rateTone(rate) {
-  if (rate >= -4 && rate <= 6) return "good";
-  if (Math.abs(rate) <= 10) return "good";
-  if (Math.abs(rate) <= 20) return "caution";
-  return "critical";
-}
+const rateTone = rateGrade;
 
 /** Reasons the watch may want a watchmaker, or [] when nothing stands out. */
 export function serviceReasons({ rate, amplitude, beatErrorMs, liftAngleIsDefault }) {

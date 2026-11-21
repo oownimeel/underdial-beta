@@ -829,6 +829,14 @@ export function amplitudeGrade(value) {
   return "caution";
 }
 
+/** Daily rate: within ±10 s/d is fine for a mechanical watch, beyond ±20 wants a look. */
+export function rateGrade(rate) {
+  const a = Math.abs(rate);
+  if (a <= 10) return "good";
+  if (a <= 20) return "caution";
+  return "critical";
+}
+
 export function beatErrorGrade(ms) {
   if (ms <= 0.3) return "good";
   if (ms < 0.6) return "caution";

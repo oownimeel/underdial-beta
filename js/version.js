@@ -2,12 +2,22 @@
 // The same files serve both sites; the beta site is told apart by its address,
 // and keeps its own data so testing never touches the released app's records.
 
-export const APP_VERSION = "1.2.2";
+export const APP_VERSION = "1.2.3";
 export const IS_BETA = /\/underdial-beta\//.test(location.pathname);
 export const STORAGE_NAME = IS_BETA ? "underdial-beta" : "underdial";
 
 /** Newest first. Korean is the source text; English sits beside it. */
 export const CHANGELOG = [
+  {
+    version: "1.2.3",
+    date: "2026-11-21",
+    ko: [
+      "시계 상태에 하루 오차도 반영합니다: ±10초 이내는 양호, ±20초까지는 주의, 그보다 크면 점검 권장.",
+    ],
+    en: [
+      "A watch's status now counts its daily rate too: within ±10 s/d is good, up to ±20 is worth watching, beyond that suggests a service.",
+    ],
+  },
   {
     version: "1.2.2",
     date: "2026-11-21",

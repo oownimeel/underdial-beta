@@ -5,7 +5,7 @@ import { esc, icon, formatRate, formatRelative, blobURL, grade } from "../ui.js"
 import * as store from "../store.js";
 import { IS_BETA } from "../version.js";
 import { paintDotDial } from "../dial.js";
-import { amplitudeGrade, beatErrorGrade } from "../engine.js";
+import { amplitudeGrade, beatErrorGrade, rateGrade } from "../engine.js";
 import { openWatchDetail, openWatchBox, openEditWatch } from "./watch.js";
 import { openClockCard } from "./records.js";
 import { startMeasure } from "../app.js";
@@ -24,7 +24,7 @@ export function summarize(watch, measurements) {
 
 export function overallGrade(m) {
   const amp = store.measurementAmplitude(m);
-  const grades = [beatErrorGrade(m.beatErrorMs)].concat(amp == null ? [] : [amplitudeGrade(amp)]);
+  const grades = [rateGrade(m.rate), beatErrorGrade(m.beatErrorMs)].concat(amp == null ? [] : [amplitudeGrade(amp)]);
   if (grades.includes("critical")) return "critical";
   return grades.includes("caution") ? "caution" : "good";
 }

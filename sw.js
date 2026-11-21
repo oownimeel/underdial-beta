@@ -3,7 +3,7 @@
 // The beta site shares this origin with the released app, so each keeps to its own caches.
 const BETA = self.location.pathname.includes("/underdial-beta/");
 const PREFIX = BETA ? "underdial-beta-" : "underdial-";
-const VERSION = PREFIX + "v7";
+const VERSION = PREFIX + "v8";
 const ours = (key) => key.startsWith(PREFIX) && (BETA || !key.startsWith("underdial-beta-"));
 const FILES = [
   "./",

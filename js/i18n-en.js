@@ -96,6 +96,7 @@ export const EN = {
   "내 시계 보관함": "My watches",
   "내보내기": "Export",
   "녹음 파일": "Recordings",
+  "초과 점검": "and beyond: service",
   "전체 내보내기 준비 중…": "Preparing export…",
   "전체 내보내기 ({n}개, ZIP)": "Export all ({n}, ZIP)",
   "전체 내보내기를 만들지 못했습니다.": "Couldn’t prepare the export.",
