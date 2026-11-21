@@ -2,12 +2,24 @@
 // The same files serve both sites; the beta site is told apart by its address,
 // and keeps its own data so testing never touches the released app's records.
 
-export const APP_VERSION = "1.2.0";
+export const APP_VERSION = "1.2.1";
 export const IS_BETA = /\/underdial-beta\//.test(location.pathname);
 export const STORAGE_NAME = IS_BETA ? "underdial-beta" : "underdial";
 
 /** Newest first. Korean is the source text; English sits beside it. */
 export const CHANGELOG = [
+  {
+    version: "1.2.1",
+    date: "2026-11-21",
+    ko: [
+      "설정 › 녹음 파일: 모든 녹음을 ZIP 파일 하나로 한 번에 내보낼 수 있습니다.",
+      "녹음 파일 이름에 시계 이름과 측정 성공·실패 여부가 들어갑니다.",
+    ],
+    en: [
+      "Settings › Recordings: export every recording at once as one ZIP file.",
+      "Recording file names now include the watch and whether the measurement worked.",
+    ],
+  },
   {
     version: "1.2.0",
     date: "2026-11-21",

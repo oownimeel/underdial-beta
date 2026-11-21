@@ -5,6 +5,7 @@ import * as store from "../store.js";
 import { showOnboarding, installHelp } from "./onboarding.js";
 import { APP_VERSION, IS_BETA, CHANGELOG } from "../version.js";
 import { feedbackReport, logEntries } from "../log.js";
+import { makeZip } from "../zip.js";
 
 const versionText = () => `${APP_VERSION}${IS_BETA ? ` ${t("베타")}` : ""}`;
 
@@ -195,12 +196,35 @@ function openVersions() {
   }, { title: t("업데이트 내역") });
 }
 
+function fileStamp(ms) {
+  const d = new Date(ms), p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+/** underdial-20261121-224012-Watch-ok.wav: time, watch and how the measurement ended. */
+function recordingName(r) {
+  const watch = (r.watchName || "").replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 40);
+  return ["underdial", fileStamp(r.date), watch, r.outcome].filter(Boolean).join("-").replace(/\s+/g, "_") + ".wav";
+}
+
+async function recordingsZip(list) {
+  const lines = ["file\tdate\twatch\tseconds\toutcome\trate_s_per_day"];
+  const entries = list.slice().reverse().map((r) => {
+    const name = recordingName(r);
+    lines.push([name, new Date(r.date).toISOString(), r.watchName || "", r.seconds.toFixed(1), r.outcome || "", r.rate != null ? r.rate.toFixed(2) : ""].join("\t"));
+    return { name, blob: r.blob, date: r.date };
+  });
+  entries.unshift({ name: "index.tsv", blob: lines.join("\n") + "\n", date: Date.now() });
+  return makeZip(entries);
+}
+
 function openRecordings() {
   let audio = null;
   sheet(async (body) => {
     const draw = async () => {
       const list = await store.recordings();
-      body.innerHTML = list.length ? `<div class="list">${list.map((r) => `
+      body.innerHTML = list.length ? `<button class="btn btn-primary btn-block" data-all disabled>${icon("download")}${esc(t("전체 내보내기 준비 중…"))}</button>
+        <div class="list">${list.map((r) => `
         <div class="list-row">
           <button class="icon-btn" style="background:var(--relief)" data-play="${r.id}" aria-label="${esc(t("재생"))}">${icon("play")}</button>
           <span class="grow"><span class="title">${esc(r.watchName || t("시계 미지정"))}</span><span class="caption">${esc(formatDateTime(r.date))} · ${Math.round(r.seconds)}${esc(t("초"))}</span></span>
@@ -209,6 +233,16 @@ function openRecordings() {
         </div>`).join("")}</div><p class="caption" style="margin:0">${esc(t("측정 소리를 WAV 파일로 내보내 다른 기기나 앱과 비교할 수 있습니다."))}</p>`
         : `<div class="card empty"><p>${esc(t("저장된 녹음 파일이 없습니다."))}</p></div>`;
       const find = (id) => list.find((r) => r.id === id);
+      const all = body.querySelector("[data-all]");
+      if (all) {
+        // Built ahead of the tap: Safari only allows sharing straight from a tap.
+        recordingsZip(list).then((zip) => {
+          if (!all.isConnected) return;
+          all.disabled = false;
+          all.innerHTML = `${icon("download")}${esc(t("전체 내보내기 ({n}개, ZIP)", { n: list.length }))}`;
+          all.onclick = () => shareOrDownload(zip, `underdial-recordings-${fileStamp(Date.now())}.zip`, "Underdial recordings");
+        }, () => { if (all.isConnected) all.textContent = t("전체 내보내기를 만들지 못했습니다."); });
+      }
       body.querySelectorAll("[data-play]").forEach((b) => {
         b.onclick = () => {
           if (audio) { audio.pause(); }
@@ -219,8 +253,7 @@ function openRecordings() {
       body.querySelectorAll("[data-save]").forEach((b) => {
         b.onclick = () => {
           const r = find(b.dataset.save);
-          const stamp = new Date(r.date).toISOString().replace(/[:T]/g, "-").slice(0, 19);
-          shareOrDownload(r.blob, `underdial-${stamp}.wav`, "Underdial recording");
+          shareOrDownload(r.blob, recordingName(r), "Underdial recording");
         };
       });
       body.querySelectorAll("[data-del]").forEach((b) => {

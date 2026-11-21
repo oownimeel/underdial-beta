@@ -202,7 +202,8 @@ class Stage {
     if (this.micLabel) store.setPrefs({ lastMic: this.micLabel });
     if (store.prefs().keepRecordings && samples && samples.length) {
       const blob = new Blob([encodeWAV(samples, sampleRate)], { type: "audio/wav" });
-      store.saveRecording({ watchName: this.watch ? this.watch.name : "", seconds: samples.length / sampleRate, sampleRate, blob }).catch(() => {});
+      store.saveRecording({ watchName: this.watch ? this.watch.name : "", seconds: samples.length / sampleRate, sampleRate, blob,
+        outcome: result ? "ok" : (reason || "failed"), rate: result ? result.rate : null }).catch(() => {});
     }
     const seconds = samples && sampleRate ? Math.round(samples.length / sampleRate) : 0;
     if (!result) {
